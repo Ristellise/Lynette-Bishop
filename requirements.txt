@@ -1,0 +1,6 @@
+# For AuthTools
+twitter
+# Main bot
+nextcord
+peony
+dateutil
