@@ -29,10 +29,30 @@ A "Simple" twitter to discord webhook bot:
 5. Add hooks. there are commands for that
 6. Add twitter users.
 
+## Commands
+
+All Commands are bounded to the creator of the said discord bot. No plans to have an allowlist for users.
+
+`!ly2 stalk <twitter_username> <webhook_token> [nsfw=False]`
+- `twitter_username`: Required. Twitter Screen Name. so like `@twitter` but without the `@`. so it's `twitter.`
+- `webhook_token`: Required. The Short webhook name.
+- `nsfw`: Optional. Default is false, to mark the user's images as not NSFW. Not throughly tested.
+
+`!ly2 unstalk [twitter_username...]`
+- `twitter_username`: Required. Same as `stalk`, however, a list of twitter names is allowed.
+
+`!ly2 help`
+- Returns all the help available to the user.
+
 ## Development
 
 - Feel free to PR.
 - Main development will be based on my requirements. If you want X feature, you might need to wait.
+
+## FAQ
+
+Q: On the topic of black/white/allow/deny lists...  
+A: I wished you didn't bring it up, anyway deal with it. It's the same deal with master/slave branches. It feels stupid.
 
 ## Thanks
 
