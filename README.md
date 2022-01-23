@@ -31,7 +31,7 @@ A "Simple" twitter to discord webhook bot:
 
 ## Commands
 
-All Commands are bounded to the creator of the said discord bot. No plans to have an allowlist for users.
+All Commands are bounded to the creator of the said discord bot. There are no plans to have an allowlist for users.
 
 `!ly2 stalk <twitter_username> <webhook_token> [nsfw=False]`
 - `twitter_username`: Required. Twitter Screen Name. so like `@twitter` but without the `@`. so it's `twitter.`
@@ -47,12 +47,12 @@ All Commands are bounded to the creator of the said discord bot. No plans to hav
 ## Development
 
 - Feel free to PR.
-- Main development will be based on my requirements. If you want X feature, you might need to wait.
+- Main development will revolve on my needs. If you want X feature, you might need to wait.
 
 ## FAQ
 
 Q: On the topic of black/white/allow/deny lists...  
-A: I wished you didn't bring it up, anyway deal with it. It's the same deal with master/slave branches. It feels stupid.
+A: I wished you didn't bring it up. Anyway, deal with it. It's the same deal with master/slave branches. It feels stupid.
 
 ## Thanks
 
@@ -61,4 +61,5 @@ If someone knows where the github link has gone to, please let me know in an iss
 
 ## License
 
-- MIT License, `AuthTools` License, I'm not too sure about...
+- MIT License for the code other than the one relating to `AuthTools`.  
+For that folder, I'm not too sure about the license.
