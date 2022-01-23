@@ -3,4 +3,5 @@ twitter
 # Main bot
 nextcord
 peony
-dateutil
+python-dateutil
+validators

@@ -45,6 +45,10 @@ class JsonEmbed:
         if url:
             self._image = {"url": url}
 
+    @property
+    def has_image(self):
+        return True if self._image else False
+
     def set_author(self, name=None, url=None, icon_url=None):
         self._author = {}
         if name:
@@ -271,7 +275,7 @@ class TwitterResolver(AsyncResolver):
         prep = {"embeds": embeds, "quoted": hasQuote, "recursion": self.recurse + 1, "target": webhook_target}
 
         # Examine outer links
-        if len(embeds) == 1:
+        if len(embeds) == 1 and not embeds[0].has_image:
             for link in outerlinks:
                 for domain in self.SITESDOMAINS:
                     if link['display_url'].startswith(domain):
