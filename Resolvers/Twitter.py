@@ -5,103 +5,11 @@ from typing import List
 
 import aiohttp
 import dateutil.parser
-import validators.url
 from bs4 import BeautifulSoup
 from peony.data_processing import JSONData
 
-
-class JsonEmbed:
-
-    def __init__(self,
-                 title=None,
-                 description=None,
-                 url=None,
-                 timestamp=None,
-                 color=None):
-        self._footer = None
-        self._title = title
-        self._type = "rich"
-        self._description = description
-        self._url = url
-        self._fields = None
-        self._timestamp = timestamp
-        self._color = color
-        self._image = None
-        self._author = None
-
-    def set_footer(self, text, icon_url=None):
-        self._footer = {"text": text}
-        if icon_url:
-            self._footer["icon_url"] = icon_url
-
-    def json(self):
-        tmp = {}
-        for k, v in self.__dict__.items():
-            if k.startswith("_") and isinstance(v, (str, int, dict, list, float)):
-                tmp[k.strip("_")] = v
-        return tmp
-
-    def set_image(self, url=None):
-        if url:
-            self._image = {"url": url}
-
-    @property
-    def has_image(self):
-        return True if self._image else False
-
-    def set_author(self, name=None, url=None, icon_url=None):
-        self._author = {}
-        if name:
-            self._author["name"] = name
-        if url:
-            self._author["url"] = url
-        if icon_url:
-            self._author["icon_url"] = icon_url
-
-    @property
-    def url(self):
-        return self._url
-
-    @url.setter
-    def url(self, value):
-        if validators.url(value, public=True):
-            self._url = value
-        else:
-            raise Exception(f"URL: {value} not valid public url.")
-
-    @property
-    def description(self):
-        return self._description
-
-    @description.setter
-    def description(self, value):
-        self._description = value
-
-    @property
-    def title(self):
-        return self._title
-
-    @title.setter
-    def title(self, value):
-        self._title = value
-
-
-class Resolver:
-    agent = {"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                           "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36 "
-                           "LynetteBishopTwitterResolver/0.5.1"}
-
-    def __init__(self, Link, nsfw=False):
-        pass
-
-    def get_embeds(self) -> List[JsonEmbed]:
-        raise NotImplementedError()
-
-
-class AsyncResolver(Resolver):
-
-    async def get_embeds(self) -> List[JsonEmbed]:
-        raise NotImplementedError()
+from .Common import AsyncResolver, JsonEmbed
+from .Fantia import FantiaResolver
 
 
 class TwitterCardResolver(AsyncResolver):
@@ -111,6 +19,7 @@ class TwitterCardResolver(AsyncResolver):
         print(CardLink)
         self.loop = asyncio.get_running_loop()
         self.cardLink = CardLink
+        self.nsfw = nsfw
 
     async def get_embeds(self) -> List[JsonEmbed]:
         async with aiohttp.ClientSession(headers=self.agent) as session:
@@ -124,8 +33,15 @@ class TwitterCardResolver(AsyncResolver):
                         if not prop:
                             prop = i.get('property')
                         if prop == "twitter:image":
-                            embes[0].set_image(url=i.get('content'))
+                            url = i.get('content')
+                            if self.nsfw:
+                                # noinspection HttpUrlsUsage
+                                url = url.replace('http://', '').replace('https://', '')
+                                url = f"https://images.weserv.nl/?blur=5&url={url}"
+                            embes[0].set_image(url=url)
                         elif prop == "og:title":
+                            embes[0].title = i.get('content')
+                        elif prop == "twitter:title" and not embes[0].title:
                             embes[0].title = i.get('content')
                         elif prop == "og:description":
                             embes[0].description = i.get('content')
@@ -137,46 +53,6 @@ class TwitterCardResolver(AsyncResolver):
                     return embes
 
 
-class FantiaResolver(AsyncResolver):
-
-    def __init__(self, Link: str, nsfw=False):
-        super().__init__(Link)
-        self.nsfw = nsfw
-        self.loop = asyncio.get_running_loop()
-        self.fantiaLink: str = Link
-
-    async def get_embeds(self):
-        embeds = [JsonEmbed()]
-        main_em = embeds[0]
-        url = f"https://fantia.jp/api/v1/posts/{self.fantiaLink.split('/')[-1]}"
-        async with aiohttp.ClientSession(headers=self.agent) as session:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    status = await response.json()
-                    post = status.get("post", {})
-                    comment = post.get("blog_comment", "<No Comment>")
-                    post.get("blog_comment", "<No Comment>")
-                    image = post.get('thumb', {}).get('original')
-                    fields = []
-                    main_em.title = post.get('title', '<No Title?>')
-                    fanclub = post.get('fanclub', {})
-                    main_em.set_author(
-                        name=fanclub.get('fanclub_name_with_creator_name', "<No Creator?>"),
-                        url=f"https://fantia.jp{fanclub.get('uri', {}).get('show')}")
-                    main_em.url = self.fantiaLink
-                    main_em.description = comment
-                    if image:
-                        main_em.set_image(url=image)
-                    likes = post.get('likes_count', 0)
-                    if likes:
-                        fields.append(
-                            {"name": "Likes", "value": str(likes), "inline": True})
-                    main_em._fields = fields
-        embeds[0].set_footer(text=f"Lynette Bishop V2 [Fantia]",
-                             icon_url=f"https://i.ibb.co/52h6qnk/icon004sw.jpg?cache=pants")
-        return embeds
-
-
 class TwitterResolver(AsyncResolver):
     DATEP = dateutil.parser.parser()
     DEFAULTRESOLVER = TwitterCardResolver
@@ -185,7 +61,8 @@ class TwitterResolver(AsyncResolver):
         "youtu.be": {"nsfw": False},
         "youtube.com": {"nsfw": False},
         "ec.toranoana.jp": {"nsfw": True},
-        "fantia.jp": {"nsfw": False, "resolver": FantiaResolver}
+        "fantia.jp": {"nsfw": False, "resolver": FantiaResolver},
+        "animatetimes.com": {"nsfw": False}
     }
     SITESDOMAINS = list(SITES.keys())
 
@@ -226,18 +103,19 @@ class TwitterResolver(AsyncResolver):
             embeds.append(self.get_embed_from_media(media_target.user, media))
         if len(embeds) == 0:
             embeds.append(JsonEmbed())
+            description_text = media_target.get("full_text", "")
+        else:
+            description_text = " ".join(media_target.get("full_text", "").split(" ")[:-1])
 
         # Text extraction
         outerlinks = media_target.get("entities", {}).get("urls", [])
         top_embed = embeds[0]
-        print(media_target)
-        text = media_target.get("full_text", "")
-        if not text:
-            text = media_target.get("text", "")
-        text = html.unescape(text)
+        if not description_text:
+            description_text = media_target.get("text", "")
+        description_text = html.unescape(description_text)
         for outerlink in outerlinks:
-            text = text.replace(outerlink['url'], outerlink['expanded_url'])
-        top_embed._description = text
+            description_text = description_text.replace(outerlink['url'], outerlink['expanded_url'])
+
         username = f"{media_target['user']['name']} (@{media_target['user']['screen_name']})"
         avatar_url = media_target['user']['profile_image_url_https'].replace("_normal", "")
         top_embed.set_author(name=username,
@@ -282,4 +160,6 @@ class TwitterResolver(AsyncResolver):
                         resolver = self.SITES[domain].get("resolver", self.DEFAULTRESOLVER)
                         nsfw = self.SITES[domain].get("nsfw", False)
                         prep['embeds'].extend(await resolver(link['expanded_url'], nsfw).get_embeds())
+                        description_text.replace(link['expanded_url'], "")
+        top_embed._description = description_text
         return prep

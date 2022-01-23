@@ -10,7 +10,7 @@ import peony
 from peony import PeonyClient
 from peony.data_processing import JSONData
 
-from LinkResolver import TwitterResolver
+from Resolvers.Twitter import TwitterResolver
 
 
 class Eila:
@@ -151,7 +151,7 @@ async def main():
                'access_token': config["KEYS"]['access_token'],
                'access_token_secret': config["KEYS"]['access_token_secret']}
     y = Yoshika(secrets, asyncio.get_running_loop())
-    pp = await y.peony.api.statuses.show.get(id=1460323737035677698, tweet_mode='extended')
+    pp = await y.peony.api.statuses.show.get(id=1485203898809794561, tweet_mode='extended')
     await y.tweet_details(pp, webhook_url=config['DISCORD']['dev_webhook'])
     print(pp)
 
