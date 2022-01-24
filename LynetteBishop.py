@@ -75,15 +75,15 @@ class BishopCog(commands.Cog):
             return await ctx.send(f"__{twitter_username}__ Not found.")
         name = uu[0]
 
-        if webhook_token in list(self.hooks.keys()):
-            name.webhook = self.hooks[webhook_token]
+        if webhook_name in list(self.hooks.keys()):
+            name.webhook = self.hooks[webhook_name]
             name.nsfw = nsfw
             self.yoshika.users[str(name.id)] = name
             with shelve.open("LynetteStore", "w") as f:
                 f[str(name.id)] = name.dict()
             return await ctx.send(f"Added: __{name.screen_name}__ | NSFW: {nsfw}")
         else:
-            return await ctx.send(f"Token Name: __{webhook_token}__ Not found.")
+            return await ctx.send(f"Token Name: __{webhook_name}__ Not found.")
 
     @commands.command("unstalk", aliases=["unfollow"])
     @commands.is_owner()
